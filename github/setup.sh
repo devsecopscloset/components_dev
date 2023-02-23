@@ -22,9 +22,9 @@ else
 fi
 
 
-gpg --quiet --batch --yes --decrypt --passphrase="$EXKEY" --output ~/trigger/secrets ~/trigger/secrets.gpg &&
+#gpg --quiet --batch --yes --decrypt --passphrase="$EXKEY" --output ~/trigger/secrets ~/trigger/secrets.gpg &&
 
-tar -xf ~/trigger/secrets -C ~/trigger/ &&
+#tar -xf ~/trigger/secrets -C ~/trigger/ &&
 
-mv ~/trigger/config ~/$APPNAME/kubeconfig/ &&
+#mv ~/trigger/config ~/$APPNAME/kubeconfig/ &&
 mv ~/trigger/Config.yaml ~/$APPNAME/config/ &&
