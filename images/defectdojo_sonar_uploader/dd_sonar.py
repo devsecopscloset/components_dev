@@ -74,7 +74,7 @@ def dd_setup():
     DD_SCANTYPE="SonarQube API Import"
 
     global ENG_NAME
-    ENG_NAME=os.environ['pipeline_no']
+    ENG_NAME='Pipeline No '+str(os.environ['pipeline_no'])
     print(ENG_NAME)
 
     global config_id

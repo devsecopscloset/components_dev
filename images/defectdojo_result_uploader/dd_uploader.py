@@ -42,7 +42,7 @@ def dd_setup():
     print(DD_SCANTYPE)
 
     global ENG_NAME
-    ENG_NAME='Pipeline No '+pipeline_no
+    ENG_NAME='Pipeline No '+str(pipeline_no)
     print(ENG_NAME)
 
 def auth():
