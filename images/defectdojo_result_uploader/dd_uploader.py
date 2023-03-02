@@ -38,7 +38,7 @@ def dd_setup():
     pipeline_no = os.environ['pno']
 
     global DD_SCANTYPE
-    DD_SCANTYPE=result_file[0]
+    DD_SCANTYPE=result_file[0].split('-')[1].split('.')[0]
     print(DD_SCANTYPE)
 
     global ENG_NAME
