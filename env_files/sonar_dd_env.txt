@@ -1,10 +1,10 @@
-dd_url=https://defect-dojo.censanext.com
-dd_username=admin
-dd_password=P@88W0rD0fD0J0
+dd_url=
+dd_username=
+dd_password=
 dd_product_name=waycool2.0_demo
 dd_product_desc=demo at waycool
-sonar_project_key=waycool2odemo
-sonar_username=admin
-sonar_password=devops
-sonar_url=https://sonarqube.censanext.com
+sonar_project_key=
+sonar_username=
+sonar_password=
+sonar_url=
 pipeline_no=123
