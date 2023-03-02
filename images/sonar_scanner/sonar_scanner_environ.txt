@@ -6,3 +6,4 @@ host=https://sonarqube.censanext.com
 branch=master
 git_un=mithun
 source_path=dummy
+scm_source=gitlab.censanext.com

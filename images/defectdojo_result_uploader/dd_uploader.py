@@ -43,12 +43,15 @@ def dd_setup():
     latest=date_list.index(max(date_list))
     latest_pno=result_file[latest].split('-')[0].split('_')[5] 
     
+    global pipeline_no
+    pipeline_no = os.environ['pno']
+
     global DD_SCANTYPE
-    DD_SCANTYPE=result_file[latest].split('-')[1].split('.')[0]
+    DD_SCANTYPE=result_file[0]
     print(DD_SCANTYPE)
 
     global ENG_NAME
-    ENG_NAME='Pipeline No '+latest_pno
+    ENG_NAME='Pipeline No '+pipeline_no
     print(ENG_NAME)
 
 def auth():
