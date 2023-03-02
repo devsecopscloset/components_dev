@@ -110,7 +110,7 @@ def upload_scan():
         'engagement_name': ENG_NAME,
         'name': ENG_NAME,
         'engagement': str(get_eng_id()),
-        'file':(result_file[latest], open('/results/'+result_file[latest], 'rb'), 'application/json')
+        'file':(result_file[0], open('/results/'+result_file[0], 'rb'), 'application/json')
         }
     )
     r = requests.post(DD_URL+'/api/v2/import-scan/',
