@@ -1,0 +1,6 @@
+dd_url=https://defect-dojo.censanext.com
+dd_username=admin
+dd_password=P@88W0rD0fD0J0
+dd_product_name=logistics-uat
+dd_product_desc=logistics-uat
+pno=13_3_2023_11_50_905482

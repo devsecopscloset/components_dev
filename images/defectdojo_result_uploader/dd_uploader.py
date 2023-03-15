@@ -1,132 +1,180 @@
-import yaml
-import requests
-import json
 from datetime import date
-from datetime import datetime as dt
-import subprocess
-from requests_toolbelt import MultipartEncoder
-from pathlib import Path
-import os
-import glob
+import json, os, requests
+from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
+from clint.textui.progress import Bar as ProgressBar
 
-def dd_setup():
-    global DD_URL
-    DD_URL=os.environ['dd_url']
 
-    global dd_username
-    dd_username=os.environ['dd_username']
-    
-    global dd_password
-    dd_password=os.environ['dd_password']
+#######################################
 
-    global DD_TOKEN
-    DD_TOKEN=auth()
-
-    global DD_PRODUCT_NAME
-    DD_PRODUCT_NAME=os.environ['dd_product_name']
-
-    global DD_PROD_DESC
-    DD_PROD_DESC=os.environ['dd_product_desc']
-    
-    global result_file
-    result_file=os.listdir('/results')
-    for i in result_file:
-        if i.endswith('.conf'):
-            result_file.remove(i)
-    
-    global pipeline_no
-    pipeline_no = os.environ['pno']
-
-    global DD_SCANTYPE
-    DD_SCANTYPE=result_file[0].split('-')[1].split('.')[0]
-    print(DD_SCANTYPE)
-
-    global ENG_NAME
-    ENG_NAME='Pipeline No '+str(pipeline_no)
-    print(ENG_NAME)
-
-def auth():
-    creds={
-        'username' : dd_username,
-        'password' : dd_password
-    }
-    r = requests.post(DD_URL+'/api/v2/api-token-auth/',
-    data=json.dumps(creds),headers={'Content-Type': 'application/json'} )
-    return r.content.decode('UTF-8').split('"')[3]
 
 def get_prod_id():
-    r=requests.get(DD_URL+'/api/v2/products', headers={'Authorization': 'Token '+DD_TOKEN})
-    for i in r.json()['results']:
-        if i['name']==DD_PRODUCT_NAME:
-            return i['id']
-    return None
-
-def get_eng_id():
-    r=requests.get(DD_URL+'/api/v2/engagements', headers={'Authorization': 'Token '+DD_TOKEN})
-    for i in r.json()['results']:
-        print(i)
-        if i['name']==ENG_NAME:
-            return i['id']
-    return None
+    print(f"Requesting Product ID for: {dd_product_name}")
+    products = requests.get(
+        f"{dd_url}/api/v2/products", headers={"Authorization": f"Token {dd_token}"}
+    )
+    for product in products.json()["results"]:
+        if product["name"] == dd_product_name:
+            dd_product_id = product["id"]
+            print(f"Product ID for: {dd_product_name} is {dd_product_id}")
+            return dd_product_id
+    print("Product does not exists on defect dojo")
+    return -1
 
 
+########################################
+def get_engagement_id():
+    print(f"Requesting Engagement ID for: {dd_engagement_name}")
+    engagements = requests.get(
+        f"{dd_url}/api/v2/engagements", headers={"Authorization": f"Token {dd_token}"}
+    )
+    for engagement in engagements.json()["results"]:
+        if engagement["name"] == dd_engagement_name:
+            id = engagement["id"]
+            print(f"Engagement ID for: {dd_engagement_name} is {id}")
+            return id
+    return -1
+
+
+########################################
 def create_prod():
-    today = date.today()
-    t_date=today.strftime('%Y-%m-%d')
-    fields={
-    'name': DD_PRODUCT_NAME,
-    'product_name': DD_PRODUCT_NAME,
-    'prod_type':'1',
-    'description': DD_PROD_DESC
+    print(f"Creating new product on defectdojo with name {dd_product_name}")
+    fields = {
+        "name": dd_product_name,
+        "product_name": dd_product_name,
+        "prod_type": "1",
+        "description": dd_product_desc,
     }
-    r = requests.post(DD_URL+'/api/v2/products/',
-    data=json.dumps(fields),headers={'Content-Type': 'application/json',
-    'Authorization': 'Token '+DD_TOKEN} )
-    return r.json()['id']
+    product_creation_request = requests.post(
+        f"{dd_url}/api/v2/products/",
+        data=json.dumps(fields),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Token {dd_token}",
+        },
+    )
+    product_id = product_creation_request.json()["id"]
+    print(
+        f"Created new product on defectdojo with name {dd_product_name} with id {product_id}"
+    )
+    return product_id
 
+
+######################################
 def create_eng():
+    print(f"Creating new engagement on defectdojo with name {dd_engagement_name}")
     today = date.today()
-    t_date=today.strftime('%Y-%m-%d')
-    fields={
-    'name': ENG_NAME,
-    'product':str(get_prod_id()),
-    'engagement_type':'CI/CD',
-    'target_start': str(t_date),
-    'prod_type':'1',
-    'target_end': str(t_date),
-    'description': 'Pipeline no: ' + ENG_NAME + ' Scans'
+    t_date = today.strftime("%Y-%m-%d")
+    fields = {
+        "name": dd_engagement_name,
+        "product": str(get_prod_id()),
+        "engagement_type": "CI/CD",
+        "target_start": str(t_date),
+        "prod_type": "1",
+        "target_end": str(t_date),
+        "description": f"Pipeline no: {dd_engagement_name} Scans",
     }
-    r = requests.post(DD_URL+'/api/v2/engagements/',
-    data=json.dumps(fields),headers={'Content-Type': 'application/json',
-    'Authorization': 'Token '+DD_TOKEN} )
+    engagement_creation_request = requests.post(
+        f"{dd_url}/api/v2/engagements/",
+        data=json.dumps(fields),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "Token " + dd_token,
+        },
+    )
+    dd_engagement_id = engagement_creation_request.json()["id"]
+    print(
+        f"Created new engagement on defectdojo with name {dd_product_name} with id {dd_engagement_id}"
+    )
+    return dd_engagement_id
 
 
-def upload_scan():
-    
-    mp_encoder = MultipartEncoder(
-    fields={
-        'scan_type': DD_SCANTYPE,
-        'product_name':DD_PRODUCT_NAME,
-        'engagement_name': ENG_NAME,
-        'name': ENG_NAME,
-        'engagement': str(get_eng_id()),
-        'file':(result_file[0], open('/results/'+result_file[0], 'rb'), 'application/json')
+###############################################
+def create_callback(encoder):
+    encoder_len = encoder.len
+    bar = ProgressBar(expected_size=encoder_len, filled_char="=")
+
+    def callback(monitor):
+        bar.show(monitor.bytes_read)
+
+    return callback
+
+
+def my_callback(monitor):
+    # Your callback function
+    print(monitor.bytes_read)
+
+
+def create_upload(dd_engagement_id):
+    return MultipartEncoder(
+        {
+            "scan_type": dd_scan_type,
+            "product_name": dd_product_name,
+            "engagement_name": dd_engagement_name,
+            "name": dd_engagement_name,
+            "engagement": str(dd_engagement_id),
+            "file": (
+                result_path[0],
+                open("/results/" + result_path[0], "rb"),
+                "application/json",
+            ),
         }
     )
-    r = requests.post(DD_URL+'/api/v2/import-scan/',
-        data=mp_encoder,headers={'Content-Type': mp_encoder.content_type,
-        'Authorization': 'Token '+DD_TOKEN} )
 
-if __name__=="__main__":
-    dd_setup()
-    if(get_prod_id()):
-        if(get_eng_id()):
-            print('Exists')
-            upload_scan()
-        else:
-            create_eng()
-            upload_scan()
+
+################################################################################
+def upload_scan(dd_engagement_id):
+    print("uploading results to defectdojo")
+    encoder = create_upload(dd_engagement_id)
+
+    callback = create_callback(encoder)
+    monitor = MultipartEncoderMonitor(encoder, callback)
+
+    results_upload_request = requests.post(
+        f"{dd_url}/api/v2/import-scan/",
+        data=monitor,
+        headers={
+            "Content-Type": monitor.content_type,
+            "Authorization": "Token " + dd_token,
+        },
+    )
+    print(f"\n\nResults Uploaded to Defectdojo {results_upload_request}")
+
+
+if __name__ == "__main__":
+
+    dd_url = os.environ["dd_url"]
+    dd_username = os.environ["dd_username"]
+    dd_password = os.environ["dd_password"]
+    dd_product_name = os.environ["dd_product_name"]
+    dd_product_desc = os.environ["dd_product_desc"]
+    dd_engagement_name = f'Pipeline No {os.environ["pno"]}'
+
+    print("Environment Variables Loaded")
+
+    #######################################
+    auth_request = requests.post(
+        f"{dd_url}/api/v2/api-token-auth/",
+        data=json.dumps({"username": dd_username, "password": dd_password}),
+        headers={"Content-Type": "application/json"},
+    )
+    dd_token = auth_request.content.decode("UTF-8").split('"')[3]
+    print("Authentication Token Generated")
+    #######################################
+    result_path = os.listdir("/results")
+    for file in result_path:
+        if file.endswith(".conf"):
+            result_path.remove(file)
+    dd_scan_type = result_path[0].split("-")[1].split(".")[0]
+    print(f"Deleted .conf files\nScan type is: {dd_scan_type}")
+
+    dd_product_id = get_prod_id()
+    if dd_product_id == -1:
+        dd_product_id = create_prod()
+        dd_engagement_id = create_eng()
     else:
-        create_prod()
-        create_eng()
-        upload_scan()
+        dd_engagement_id = get_engagement_id()
+        if dd_engagement_id == -1:
+            dd_engagement_id = create_eng()
+
+    print("Uploading results now!")
+    upload_scan(dd_engagement_id)
