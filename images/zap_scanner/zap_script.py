@@ -10,7 +10,7 @@ CONTEXT_ID=os.environ['context_id']
 
 CONTEXT_NAME=requests.get("https://"+ZAP_SOURCE+"/JSON/context/view/contextList/?apikey="+API_KEY).json()['contextList'][int(CONTEXT_ID)-1]
 
-FILE_NAME=['result_file_name']
+FILE_NAME=os.environ['result_file_name']
 
 ### Triggering Scan ###
 
@@ -37,7 +37,7 @@ print("Scan Completed")
 
 ### Generating Report ###
 
-URL3="https://"+ZAP_SOURCE+"/JSON/reports/action/generate/?apikey="+API_KEY+"&title="+FILE_NAME+"&template=traditional-xml&theme=&description=&contexts="+CONTEXT_NAME+"&sites=&sections=&includedConfidences=&includedRisks=&reportFileName="+FILE_NAME+"&reportFileNamePattern=&reportDir=&display="
+URL3="https://"+ZAP_SOURCE+"/JSON/reports/action/generate/?apikey="+API_KEY+"&title="+str(FILE_NAME)+"&template=traditional-xml&theme=&description=&contexts="+str(CONTEXT_NAME)+"&sites=&sections=&includedConfidences=&includedRisks=&reportFileName="+str(FILE_NAME)+"&reportFileNamePattern=&reportDir=&display="
 
 print("Generating Report....")
 
